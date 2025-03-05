@@ -1,5 +1,6 @@
 import * as wwt from '@wwtelescope/engine';
 import { wwt_apply_json_message } from './wwt_json_api';
+import "./widget.css";
 
 
 async function render({model, el}) {
