@@ -31,7 +31,6 @@ class WWTWidget(anywidget.AnyWidget, BaseWWTWidget):
     @observe("_wwt_ready")
     def _on_wwt_ready(self, change):
         if change["new"]:
-            print("WWT Ready")
             self._on_app_status_change(True)
 
     @observe("_dirty")

@@ -191,7 +191,6 @@ def Page():
 
     def _constellation_settings():
         wwt_widget = solara.get_widget(wwt_container).children[0]
-        print(show_constellation_boundaries.value)
         wwt_widget.constellation_boundaries = show_constellation_boundaries.value
         wwt_widget.constellation_figures = show_constellation_figures.value
 
