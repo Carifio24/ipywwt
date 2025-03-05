@@ -1,10 +1,13 @@
-from dataclasses import dataclass, field, asdict
+import multiprocessing
+from threading import Timer
+import time
+from dataclasses import asdict
 from pathlib import Path
 
 import astropy.units as u
 from astropy.time import Time
 from anywidget import AnyWidget
-from traitlets import Unicode, Float, observe, default, Bool
+from traitlets import Unicode, Float, observe, default
 import logging
 import numpy as np
 from astropy.coordinates import SkyCoord
@@ -12,15 +15,26 @@ import ipywidgets as widgets
 
 from .messages import *
 from .imagery import get_imagery_layers
-from .layers import TableLayer, LayerManager
+from .layers import LayerManager
 
 bundler_output_dir = Path(__file__).parent / "static"
 
+APP_LIVELINESS_DEADLINE = 10 
 DEFAULT_SURVEYS_URL = "https://worldwidetelescope.github.io/pywwt/surveys.xml"
 R2D = 180 / np.pi
 R2H = 12 / np.pi
 
 logger = logging.getLogger("pywwt")
+
+from IPython.display import Javascript
+
+#  https://stackoverflow.com/a/48741004
+class RepeatTimer(Timer):
+    def run(self):
+        while not self.finished.wait(self.interval):
+            print("In run")
+            Javascript("console.log('In run')");
+            self.function(*self.args, **self.kwargs)
 
 
 class WWTWidget(AnyWidget):
@@ -41,8 +55,6 @@ class WWTWidget(AnyWidget):
         0.8, help="The opacity of the foreground layer " "(`float`)"
     )
     
-    mounted = Bool(False, help="Whether the widget is mounted (`bool`)").tag(sync=True)
-
     # View state that the frontend sends to us:
     _raRad = 0.0
     _decRad = 0.0
@@ -51,6 +63,8 @@ class WWTWidget(AnyWidget):
     _engineTime = Time("2017-03-09T12:30:00", format="isot")
     _systemTime = Time("2017-03-09T12:30:00", format="isot")
     _timeRate = 1.0
+
+    _appAlive = False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -66,35 +80,61 @@ class WWTWidget(AnyWidget):
 
         self.layers = LayerManager(parent=self)
         self.current_mode = "sky"
-        self.observe(self._on_mounted_change, names='mounted')
+        
+        self._last_pong_timestamp = 0
+        self._timer = RepeatTimer(1.0, self._check_ready)
+        self._timer.start()
+        print("HERE")
 
     def _send_msg(self, **kwargs):
         """
         Translate PyWWT-style raw dict messages to structured message classes.
         """
-        msg_cls = msg_ref[kwargs["event"]]
+        msg_type = kwargs.get("event", None) or kwargs.get("type", None)
+        msg_cls = msg_ref[msg_type]
         self.send(msg_cls(**kwargs))
 
     def send(self, msg: RemoteAPIMessage, buffers=None):
-        if self.mounted:
+        if self._appAlive or getattr(msg, "type", None) == "wwt_ping_pong":
             super().send(asdict(msg), buffers)
         else:
             self.message_queue.append({'msg':msg, 'buffers':buffers})
 
+    def _check_ready(self):
+        print("Is it ready yet?")
+        self._send_msg(
+            type="wwt_ping_pong",
+            threadId=str(time.time())
+        )
+
+        print(time.time(), self._last_pong_timestamp)
+        alive = (time.time() - self._last_pong_timestamp) < APP_LIVELINESS_DEADLINE
+
+        print(f"Alive: {alive}")
+        self._on_app_status_change(alive=alive)
+        print("Returning from _check_ready")
+
     def load_image_collection(self, url=DEFAULT_SURVEYS_URL):
         self.send(LoadImageCollectionMessage(url))
-    
-    def _on_mounted_change(self, change):
-        while self.message_queue:
-            message = self.message_queue.pop(0)
-            self.send(message['msg'], message['buffers'])
-            
-        callbacks = self._on_ready
-        if callbacks:
-            for callback in callbacks:
-                callback()
-    
-    def on_ready(self, callback = None):
+
+    def _on_app_status_change(self, alive=None):
+        print(alive)
+        if alive:
+            print("It's alive!")
+        if alive is not None:
+            self._appAlive = alive
+
+            if alive:
+                while self.message_queue:
+                    message = self.message_queue.pop(0)
+                    self.send(message['msg'], message['buffers'])
+
+                while self._on_ready:
+                    callback = self._on_ready.pop(0)
+                    callback()
+                self._timer.join()
+                
+    def on_ready(self, callback):
         """
         Set a callback function that will be executed when the widget receives
         the "wwt_ready" message indicating the WWT application is ready to recieve
@@ -103,15 +143,12 @@ class WWTWidget(AnyWidget):
         Useful for defining intialization actions that require the WWT application
         """
         self._on_ready.append(callback)
-    
-    def ensure_mounted(self, callback = None):
-        # add to wwt_ready callback as a list
-        if self.mounted:
-            print('already mounted: running callback')
+
+    def ensure_ready(self, callback):
+        if self._appAlive:
             callback()
-            return
-        print('not mounted: adding callback')
-        self._on_ready.append(callback)
+        else:
+            self.on_ready(callback)
     
     @observe("foreground")
     def _on_foreground_change(self, changed):
@@ -185,11 +222,19 @@ class WWTWidget(AnyWidget):
         the user.
         """
 
-        ptype = payload.get("type")
+        ptype = payload.get("type") or payload.get("event")
         # some events don't have type but do have:
         # pevent = payload.get('event')
 
         updated_fields = []
+
+        if ptype == "wwt_ping_pong":
+            try:
+                ts = float(payload['threadId'])
+            except Exception:
+                print("invalid timestamp in pingpong response")
+            else:
+                self._last_pong_timestamp = ts
 
         if ptype == "wwt_view_state":
             try:

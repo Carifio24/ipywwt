@@ -70,13 +70,25 @@ class SetForegroundByOpacityMessage(RemoteAPIMessage):
     id: str = field(default_factory=lambda: str(uuid4()))
 
 
+@dataclass
+class PingPongMessage(RemoteAPIMessage):
+    threadId: str
+    type: str = "wwt_ping_pong"
+    id: str = field(default_factory=lambda: str(uuid4()))
+
+
+def _get_event_type(msg):
+    return msg.event if hasattr(msg, "event") else getattr(msg, "type", None)
+
 msg_ref = dict(
     inspect.getmembers(
         sys.modules[__name__],
         lambda member: inspect.isclass(member) and member.__module__ == __name__,
     )
 )
-msg_ref = {v.event: v for k, v in msg_ref.items() if hasattr(v, "event")}
+msg_ref = {
+    t: v for _, v in msg_ref.items() if (t := _get_event_type(v)) is not None
+}
 
 
 if __name__ == "__main__":

@@ -62,7 +62,7 @@ export function createRender(app) {
             let layer = null;
             let event = null;
 
-            switch (msg.event) {
+            switch (msg.event || msg.type) {
                 case "center_on_coordinates":
                     console.log(classicPywwt.isCenterOnCoordinatesMessage(msg));
                     window.postMessage(msg);
@@ -133,6 +133,9 @@ export function createRender(app) {
                     window.postMessage(msg);
                     break;
                 case "set_foreground_opacity":
+                    window.postMessage(msg);
+                    break;
+                case "wwt_ping_pong":
                     window.postMessage(msg);
                     break;
                 default:
