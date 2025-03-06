@@ -12,6 +12,7 @@ from traitlets import observe
 
 from .layers import TableLayer
 from .core import BaseWWTWidget
+from .imagery import get_imagery_layers
 
 try:
     __version__ = importlib.metadata.version("ipywwt")
@@ -20,6 +21,7 @@ except importlib.metadata.PackageNotFoundError:
 
 STATIC = pathlib.Path(__file__).parent / "static"
 RESEARCH_APP = pathlib.Path(__file__).parent / "web_static" / "research"
+DEFAULT_SURVEYS_URL = "https://gist.githubusercontent.com/Carifio24/e8b02488d43a0e4381648fe06c100739/raw/surveys.xml"
 
 
 class WWTWidget(anywidget.AnyWidget, BaseWWTWidget):
@@ -29,11 +31,18 @@ class WWTWidget(anywidget.AnyWidget, BaseWWTWidget):
     _commands = traitlets.List(default_value=[]).tag(sync=True)
     _dirty = traitlets.Bool(default_value=False).tag(sync=True)
     _wwt_ready = traitlets.Bool(default_value=False).tag(sync=True)
+    _message_received = traitlets.Dict(default_value={}).tag(sync=True)
 
     server_url = traitlets.Unicode(default_value="").tag(sync=True)
 
     def __init__(self, hide_all_chrome=True, port=8899, *args, **kwargs):
         super().__init__(hide_all_chrome=hide_all_chrome, *args, **kwargs)
+
+        # Process messages from the frontend
+        self.on_msg(self._on_app_message_received)
+
+        # Override default survey URL
+        self._available_layers = get_imagery_layers(DEFAULT_SURVEYS_URL)
 
         # Define path to research app
         self._research_app_path = RESEARCH_APP
@@ -71,6 +80,10 @@ class WWTWidget(anywidget.AnyWidget, BaseWWTWidget):
     def _actually_send_msg(self, payload):
         """Sends a command to the JavaScript widget."""
         self._commands = self._commands + [payload]
+
+    def _on_app_message_received(self, instance, payload, buffers=[]):
+        """Process messages from the frontend."""
+        super()._on_app_message_received(payload)
 
     @observe("_wwt_ready")
     def _on_wwt_ready(self, change):
