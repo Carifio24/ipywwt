@@ -1,12 +1,16 @@
 {
 	"scripts": {
 		"dev": "npm run build -- --sourcemap=inline --watch",
-		"build": "esbuild js/widget.js --minify --format=esm --bundle --outdir=src/ipywwt/static"
+		"build": "esbuild js/widget.js --minify --format=esm --bundle --outdir=src/ipywwt/static && node js/postBuild.js"
 	},
 	"dependencies": {
-		"@wwtelescope/engine": "^7.30.1"
+		"@wwtelescope/engine": "^7.30.1",
+		"@wwtelescope/research-app": "^0.17.0",
+		"http": "^0.0.1-security"
 	},
 	"devDependencies": {
-		"esbuild": "0.24.2"
+		"@anywidget/types": "^0.2.0",
+		"esbuild": "^0.24.0",
+		"shelljs": "^0.8.5"
 	}
 }

@@ -36,7 +36,7 @@ def Page():
             with rv.Col():
                 with rv.Card():
                     with rv.CardTitle():
-                        rv.Text(children=["WWT Widget Test"])
+                        solara.Text("WWT Widget Test")
 
                     with rv.CardText():
                         wwt_container = rv.Html(tag="div")
@@ -59,8 +59,8 @@ def Page():
                         value=coord_fov.value,
                         on_value=lambda v: coord_fov.set(v),
                         min=0,
-                        max=350,
-                        step=10,
+                        max=60,
+                        step=5,
                     )
 
             with rv.Col():
@@ -76,7 +76,7 @@ def Page():
                         on_v_model=lambda v: adjust_layer_color.set(v),
                     )
 
-                solara.Text(f"Layer Color: {adjust_layer_color.value}")
+                solara.Text(text=f"Layer Color: {adjust_layer_color.value}")
 
                 with solara.Row(classes=["mt-2"]):
                     solara.FloatSlider(

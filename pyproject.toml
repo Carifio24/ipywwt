@@ -22,7 +22,7 @@ dev = ["watchfiles", "jupyterlab"]
 
 [tool.hatch.build]
 only-packages = true
-artifacts = ["src/ipywwt/static/*"]
+artifacts = ["src/ipywwt/static/*", "src/ipywwt/web_static/*"]
 
 [tool.hatch.build.hooks.jupyter-builder]
 build-function = "hatch_jupyter_builder.npm_builder"
