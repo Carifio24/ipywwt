@@ -31,7 +31,6 @@ async function render({model, el}) {
 
     function processDomWindowMessage(event) {
         const payload = event.data;
-
         if (event.origin !== serverOrigin)
             return;
 
@@ -41,6 +40,8 @@ async function render({model, el}) {
             if (!isNaN(ts)) {
                 _lastPongTimestamp = ts;
             }
+        } else {
+            model.send(payload);
         }
     }
 
@@ -57,7 +58,7 @@ async function render({model, el}) {
         _alive = (Date.now() - _lastPongTimestamp) < 2500;
 
         if (_alive && !model.get("_wwt_ready")) {
-            console.log("WWT research app is ready");
+            console.log("WWT research app is ready!");
             model.set("_wwt_ready", true);
             model.save_changes();
         }
