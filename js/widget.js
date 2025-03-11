@@ -15,7 +15,7 @@ async function render({model, el}) {
     // iframe.src = 'https://web.wwtassets.org/research/latest/?origin=' + location.origin;
     iframe.src = serverUrl + "/?origin=" + location.origin;
     iframe.style.width = "100%";
-    iframe.style.height = "500px";
+    iframe.style.height = "400px";
     iframe.style.border = "none";
     iframe.id = containerId;
 

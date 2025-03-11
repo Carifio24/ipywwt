@@ -8,7 +8,8 @@ import socket
 
 import anywidget
 import traitlets
-from traitlets import observe
+from traitlets import observe, default
+import ipywidgets
 
 from .layers import TableLayer
 from .core import BaseWWTWidget
@@ -95,3 +96,7 @@ class WWTWidget(anywidget.AnyWidget, BaseWWTWidget):
         if self._dirty:
             self._commands = []  # Clear the command queue
             self._dirty = False
+
+    @default("layout")
+    def _default_layout(self):
+        return ipywidgets.Layout(height="400px", align_self="stretch")
