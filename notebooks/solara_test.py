@@ -129,7 +129,9 @@ def Page():
                     )
 
     def _add_widget():
-        wwt_widget = WWTWidget()
+        # The `use_remote` parameter will toggle between using the remote WWT
+        #  server and the local WWT server.
+        wwt_widget = WWTWidget(use_remote=False)
         all_layers.set(wwt_widget.available_layers)
 
         wwt_widget_container = solara.get_widget(wwt_container)
