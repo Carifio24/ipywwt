@@ -36,7 +36,9 @@ class WWTWidget(anywidget.AnyWidget, BaseWWTWidget):
 
     server_url = traitlets.Unicode(default_value="").tag(sync=True)
 
-    def __init__(self, hide_all_chrome=True, port=8899, *args, **kwargs):
+    def __init__(
+        self, hide_all_chrome=True, port=8899, use_remote=False, *args, **kwargs
+    ):
         super().__init__(hide_all_chrome=hide_all_chrome, *args, **kwargs)
 
         # Process messages from the frontend
@@ -49,12 +51,15 @@ class WWTWidget(anywidget.AnyWidget, BaseWWTWidget):
         self._research_app_path = RESEARCH_APP
 
         # Start server
-        self._port = port
-        self.server_url = f"http://localhost:{self._port}"
+        if not use_remote:
+            self._port = port
+            self.server_url = f"http://localhost:{self._port}/research"
 
-        # Check if server is already running
-        if not self._is_server_running():
-            self._start_server()
+            # Check if server is already running
+            if not self._is_server_running():
+                self._start_server()
+        else:
+            self.server_url = "https://web.wwtassets.org/research/latest"
 
     def _is_server_running(self):
         """Check if a process is already listening on the given port."""

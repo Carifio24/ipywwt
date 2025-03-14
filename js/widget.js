@@ -5,6 +5,7 @@ async function render({model, el}) {
     // Create a unique ID for the container
     const containerId = `wwt-container-${Math.random().toString(36).substr(2, 9)}`;
     const serverUrl = model.get("server_url");
+    // const serverUrl = "https://web.wwtassets.org/research/latest";
     const serverOrigin = new URL(serverUrl).origin;
 
     let _alive = false;
@@ -12,8 +13,7 @@ async function render({model, el}) {
 
     // Create iframe
     const iframe = document.createElement('iframe');
-    // iframe.src = 'https://web.wwtassets.org/research/latest/?origin=' + location.origin;
-    iframe.src = serverUrl + "/research/?origin=" + location.origin;
+    iframe.src = serverUrl + "/?origin=" + location.origin;
     iframe.style.width = "100%";
     iframe.style.height = "400px";
     iframe.style.border = "none";
