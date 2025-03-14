@@ -21,7 +21,7 @@ except importlib.metadata.PackageNotFoundError:
     __version__ = "unknown"
 
 STATIC = pathlib.Path(__file__).parent / "static"
-RESEARCH_APP = pathlib.Path(__file__).parent / "web_static" / "research"
+RESEARCH_APP = pathlib.Path(__file__).parent / "web_static"
 DEFAULT_SURVEYS_URL = "https://gist.githubusercontent.com/Carifio24/e8b02488d43a0e4381648fe06c100739/raw/surveys.xml"
 
 
@@ -70,7 +70,10 @@ class WWTWidget(anywidget.AnyWidget, BaseWWTWidget):
 
         def run_server():
             os.chdir(self._research_app_path)
-            subprocess.run(["python", "-m", "http.server", str(self._port)], check=True)
+            subprocess.run(
+                ["python", "-m", "http.server", str(self._port), "--bind", "0.0.0.0"],
+                check=True,
+            )
 
         server_thread = threading.Thread(target=run_server, daemon=True)
         server_thread.start()
