@@ -37,7 +37,7 @@ class WWTWidget(anywidget.AnyWidget, BaseWWTWidget):
     server_url = traitlets.Unicode(default_value="").tag(sync=True)
 
     def __init__(
-        self, hide_all_chrome=True, port=8899, use_remote=False, *args, **kwargs
+        self, hide_all_chrome=True, port=8899, use_remote=False, surveys_url=None, *args, **kwargs
     ):
         super().__init__(hide_all_chrome=hide_all_chrome, *args, **kwargs)
 
@@ -45,7 +45,7 @@ class WWTWidget(anywidget.AnyWidget, BaseWWTWidget):
         self.on_msg(self._on_app_message_received)
 
         # Override default survey URL
-        self._available_layers = get_imagery_layers(DEFAULT_SURVEYS_URL)
+        self._available_layers = get_imagery_layers(surveys_url or DEFAULT_SURVEYS_URL)
 
         # Define path to research app
         self._research_app_path = RESEARCH_APP
