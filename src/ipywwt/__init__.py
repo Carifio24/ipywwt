@@ -61,7 +61,8 @@ class WWTWidget(AnyWidget):
         self._callbacks = {}
         self._futures = []
 
-        self._available_layers = get_imagery_layers(DEFAULT_SURVEYS_URL)
+        surveys_url = kwargs.get("surveys_url", DEFAULT_SURVEYS_URL)
+        self._available_layers = get_imagery_layers(surveys_url)
         self.load_image_collection()
 
         self.layers = LayerManager(parent=self)
